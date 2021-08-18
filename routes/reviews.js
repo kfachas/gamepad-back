@@ -7,25 +7,27 @@ const Reviews = require("../models/Reviews");
 
 router.post("/game/reviews", async (req, res) => {
   try {
-    const reviews = await Reviews.find({ game: req.fields.gameId }).populate({
-      path: "owner",
-      select: "account",
-    });
+    const reviews = await Reviews.find({ game: req.fields.gameId })
+      .populate({
+        path: "owner",
+        select: "account",
+      })
+      .sort({ "rate.result": -1 });
 
-    const result = [];
-    for (let i = 0; i < reviews.length; i++) {
-      for (let j = 0; j < reviews.length; j++) {
-        if (reviews[i].rate.result > reviews[j].rate.result) {
-          if (j === reviews.length - 1) {
-            result.unshift(reviews[i]);
-          }
-        } else if (j === reviews.length - 1) {
-          result.push(reviews[i]);
-        }
-      }
-    }
+    // const result = [];
+    // for (let i = 0; i < reviews.length; i++) {
+    //   for (let j = 0; j < reviews.length; j++) {
+    //     if (reviews[i].rate.result > reviews[j].rate.result) {
+    //       if (j === reviews.length - 1) {
+    //         result.unshift(reviews[i]);
+    //       }
+    //     } else if (j === reviews.length - 1) {
+    //       result.push(reviews[i]);
+    //     }
+    //   }
+    // }
 
-    res.status(200).json(result);
+    res.status(200).json(reviews);
   } catch (error) {
     res.status(400).json({ message: error.message });
   }
