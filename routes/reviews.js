@@ -16,8 +16,11 @@ router.post("/game/reviews", async (req, res) => {
     for (let i = 0; i < reviews.length; i++) {
       for (let j = 0; j < reviews.length; j++) {
         if (reviews[i].rate.result > reviews[j].rate.result) {
-          result.unshift(reviews[i]);
-          i++;
+          if (j === reviews.length - 1) {
+            result.unshift(reviews[i]);
+          }
+        } else if (j === reviews.length - 1) {
+          result.push(reviews[i]);
         }
       }
     }
