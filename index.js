@@ -25,16 +25,52 @@ app.use(cors());
 
 app.get("/", async (req, res) => {
   try {
-    // 363c4e78fb2948768916494a0c695e23
+    console.log(req.query);
+    let queries = "";
+    if (req.query.platforms && req.query.platforms !== "") {
+      queries = queries + `&platforms=${req.query.platforms}`;
+    }
+    if (req.query.tags && req.query.tags !== "") {
+      if (queries) {
+        queries = queries + `&tags=${req.query.tags}`;
+      } else {
+        queries = queries + `&tags=${req.query.tags}`;
+      }
+    }
+
     const response = await axios.get(
-      `https://api.rawg.io/api/games?key=${process.env.API_KEY}&search=${req.query.search}&page=1`
+      `https://api.rawg.io/api/games?key=${process.env.API_KEY}&search=${req.query.search}&page=${req.query.page}&ordering=${req.query.ordering}&search_precise=true` +
+        queries
+    );
+
+    return res.status(200).json(response.data);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+});
+
+app.get("/tags", async (req, res) => {
+  try {
+    const response = await axios.get(
+      `https://api.rawg.io/api/tags?key=${process.env.API_KEY}`
     );
     res.status(200).json(response.data);
   } catch (error) {
     res.status(400).json({ message: error.message });
   }
 });
-// key=363c4e78fb2948768916494a0c695e23
+
+app.get("/platforms", async (req, res) => {
+  try {
+    const response = await axios.get(
+      `https://api.rawg.io/api/platforms?key=${process.env.API_KEY}`
+    );
+    res.status(200).json(response.data);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+});
+
 app.get("/games/:id", async (req, res) => {
   try {
     const response = await axios.get(

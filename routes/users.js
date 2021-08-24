@@ -100,7 +100,7 @@ router.post("/user/login", async (req, res) => {
 // Road for list favorites games user
 router.post("/user/gamesFav", isAuthenticated, async (req, res) => {
   try {
-    const user = await User.findOne({ token: req.fields.token });
+    const user = await User.findById(req.user);
     if (user) {
       res.status(200).json(user.gamesFav);
     } else {
@@ -114,7 +114,7 @@ router.post("/user/gamesFav", isAuthenticated, async (req, res) => {
 // Road for add an favorite
 router.post("/user/addFavorites", isAuthenticated, async (req, res) => {
   try {
-    const user = await User.findOne({ token: req.fields.token });
+    const user = await User.findById(req.user);
     if (user) {
       for (let i = 0; i < user.gamesFav.length; i++) {
         if (user.gamesFav[i].id === req.fields.game.id) {
@@ -137,7 +137,7 @@ router.post("/user/addFavorites", isAuthenticated, async (req, res) => {
 // road for remove an favorite
 router.post("/user/removeFavorites", isAuthenticated, async (req, res) => {
   try {
-    const user = await User.findOne({ token: req.fields.token });
+    const user = await User.findById(req.user);
     for (let i = 0; i < user.gamesFav.length; i++) {
       if (user.gamesFav[i].id === req.fields.game.id) {
         user.gamesFav.splice(i, 1);
