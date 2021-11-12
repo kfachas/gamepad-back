@@ -98,14 +98,29 @@ router.post("/user/login", async (req, res) => {
 });
 
 // Road for list favorites games user
-router.post("/user/gamesFav", isAuthenticated, async (req, res) => {
+router.post("/user/findGameFav", isAuthenticated, async (req, res) => {
   try {
     const user = await User.findById(req.user);
-    if (user) {
-      res.status(200).json(user.gamesFav);
-    } else {
-      res.status(400).json({ message: "User not found" });
-    }
+    
+      let findGame = user.gamesFav.find((game) => game.id === req.fields.gameId)
+      if (findGame) {
+        return res.status(200).json({isAlreadyInFav: true});
+      } else {
+        return res.status(400).json({ message: "Already put in favorites" });
+      }
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+});
+
+
+router.post("/user/gamesFav", isAuthenticated, async (req, res) => {
+  try {
+    
+    const user = await User.findById(req.user);
+
+    return res.status(200).json(user.gamesFav);
+    
   } catch (error) {
     res.status(400).json({ message: error.message });
   }
