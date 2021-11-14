@@ -36,6 +36,7 @@ router.post("/user/signup", async (req, res) => {
           account: {
             username: req.fields.username,
           },
+          gamesFav: [],
         });
 
         if (req.files.picture) {
@@ -100,67 +101,65 @@ router.post("/user/login", async (req, res) => {
 // Road for list favorites games user
 router.post("/user/findGameFav", isAuthenticated, async (req, res) => {
   try {
-    const user = await User.findById(req.user);
-    
-      let findGame = user.gamesFav.find((game) => game.id === req.fields.gameId)
-      if (findGame) {
-        return res.status(200).json({isAlreadyInFav: true});
-      } else {
-        return res.status(400).json({ message: "Already put in favorites" });
-      }
+    const user = await User.findById(req.uid);
+
+    let findGame;
+
+    if (user.gamesFav.length > 0) {
+      findGame = user.gamesFav.find((game) => game.id === req.fields.gameId);
+    }
+    if (findGame && user.gamesFav.length > 0) {
+      return res.status(200).json({ isAlreadyInFav: true });
+    } else {
+      return res.status(200).json({ isAlreadyInFav: false });
+    }
   } catch (error) {
-    res.status(400).json({ message: error.message });
+    res.status(400).json(error);
   }
 });
-
 
 router.post("/user/gamesFav", isAuthenticated, async (req, res) => {
   try {
-    
-    const user = await User.findById(req.user);
+    const user = await User.findById(req.uid);
 
     return res.status(200).json(user.gamesFav);
-    
   } catch (error) {
     res.status(400).json({ message: error.message });
   }
 });
 
-// Road for add an favorite
-router.post("/user/addFavorites", isAuthenticated, async (req, res) => {
+router.post("/user/updateFavorites", isAuthenticated, async (req, res) => {
   try {
-    const user = await User.findById(req.user);
-    if (user) {
-      for (let i = 0; i < user.gamesFav.length; i++) {
-        if (user.gamesFav[i].id === req.fields.game.id) {
+    const user = await User.findById(req.uid);
+    const actionArray = ["save", "remove"];
+    if (actionArray.includes(req.fields.action)) {
+      if (req.fields.action === "save") {
+        if (
+          user.gamesFav.length > 0 &&
+          user.gamesFav.find((game) => game.id === req.fields.game.id)
+        ) {
           return res.status(400).json({ message: "Already put in favorites" });
         }
+        user.gamesFav.push(req.fields.game);
       }
-      user.gamesFav.push(req.fields.game);
+
+      if (req.fields.action === "remove") {
+        const findIndexGame = user.gamesFav.findIndex(
+          (game) => game.id === req.fields.game.id
+        );
+
+        if (findIndexGame !== -1) {
+          console.log("la");
+          user.gamesFav.splice(findIndexGame, 1);
+        }
+      }
+
       user.markModified("gamesFav");
 
       await user.save();
-      res.status(200).json("Bien ajouté.");
-    } else {
-      res.status(401).json("You need to be connected for this feature.");
-    }
-  } catch (error) {
-    res.status(400).json({ message: error.message });
-  }
-});
 
-// road for remove an favorite
-router.post("/user/removeFavorites", isAuthenticated, async (req, res) => {
-  try {
-    const user = await User.findById(req.user);
-    for (let i = 0; i < user.gamesFav.length; i++) {
-      if (user.gamesFav[i].id === req.fields.game.id) {
-        user.gamesFav.splice(i, 1);
-        user.markModified("gamesFav");
-      }
+      return res.json({ message: "success" });
     }
-    await user.save();
-    res.status(200).json({ message: "Favorite successfuly remove !" });
   } catch (error) {
     res.status(400).json({ message: error.message });
   }

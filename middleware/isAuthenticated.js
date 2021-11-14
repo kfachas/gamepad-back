@@ -8,7 +8,7 @@ const isAuthenticated = async (req, res, next) => {
     if (!user) {
       return res.status(401).json("Unauthorized");
     } else {
-      req.user = user.id;
+      req.uid = user.id;
       next();
     }
   } else {

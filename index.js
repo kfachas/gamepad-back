@@ -4,7 +4,12 @@ const mongoose = require("mongoose");
 const cors = require("cors");
 const axios = require("axios");
 const cloudinary = require("cloudinary").v2;
+const io = require("socket.io")(8900, {
+  cors: { origin: "http://localhost:3000" },
+});
 require("dotenv").config();
+// process.env.PORT ||
+const port = 3310;
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -25,7 +30,6 @@ app.use(cors());
 
 app.get("/", async (req, res) => {
   try {
-    console.log(req.query);
     let queries = "";
     if (req.query.platforms && req.query.platforms !== "") {
       queries = queries + `&platforms=${req.query.platforms}`;
@@ -91,6 +95,18 @@ app.get("*", (req, res) => {
   res.status(400).json({ message: "Page not found !" });
 });
 
-app.listen(process.env.PORT || 3001, () => {
-  console.log("Server started ! 😎");
+io.on("connection", async (socket) => {
+  console.log("New user connected");
+
+  io.emit("welcome", "this is socket server");
+  socket.on("addUser", (userId) => {
+    // addUser(userId, socket.id);
+
+    console.log("adduser", userId);
+  });
+  socket.on("disconnect", () => {
+    console.log("user disconnected");
+  });
 });
+
+app.listen(port, () => console.log("Server start"));
