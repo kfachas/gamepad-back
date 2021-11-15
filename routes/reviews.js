@@ -64,11 +64,8 @@ router.post("/game/reviewRating", isAuthenticated, async (req, res) => {
     if (req.fields.userRate) {
       // if user didnt already rate this review
       if (findUserRateIndex === -1) {
-        if (req.fields.userRate === 1) {
-          review.rate.like += 1;
-        } else {
-          review.rate.dislike += 1;
-        }
+        review.rate[req.fields.userRate] += 1;
+
         review.rate.users.push({
           id: req.uid,
           rate: req.fields.userRate,
@@ -77,24 +74,19 @@ router.post("/game/reviewRating", isAuthenticated, async (req, res) => {
       } else {
         // if rate is different than the previous rate
         if (req.fields.userRate !== review.rate.users[findUserRateIndex].rate) {
-          if (req.fields.userRate === 1) {
+          if (req.fields.userRate === "like") {
             review.rate.like += 1;
             review.rate.dislike -= 1;
-          } else if (req.fields.userRate === -1) {
+          } else if (req.fields.userRate === "dislike") {
             review.rate.dislike += 1;
             review.rate.like -= 1;
           }
-          review.rate.users[findUserRateIndex] = {
-            id: req.uid,
-            rate: req.fields.userRate,
-          };
+          review.rate.users[findUserRateIndex].rate = req.fields.userRate;
           //  if the vote is the same as the previous one then it means that the user removes his vote
-        } else if (req.fields.userRate === req.fields.userRate) {
-          if (req.fields.userRate === 1) {
-            review.rate.like -= 1;
-          } else {
-            review.rate.dislike -= 1;
-          }
+        } else if (
+          req.fields.userRate === review.rate.users[findUserRateIndex].rate
+        ) {
+          review.rate[req.fields.userRate] -= 1;
           if (review.rate.result > 0) {
             review.rate.result -= 1;
           }
