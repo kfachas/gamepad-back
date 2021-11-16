@@ -101,22 +101,30 @@ io.on("connection", async (socket) => {
   console.log("New user connected");
 
   const listMessagesData = await Message.find();
-  io.emit("listMessages", listMessagesData);
 
-  socket.on("addUser", (userId) => {
-    // addUser(userId, socket.id);
-
-    console.log("adduser", userId);
+  socket.on("getMessages", (getMessages) => {
+    console.log(getMessages);
+    console.log(listMessagesData);
+    getMessages && io.emit("listMessages", listMessagesData);
   });
+
+  // socket.on("addUser", (userId) => {
+  //   // addUser(userId, socket.id);
+
+  //   console.log("adduser", userId);
+  // });
+
   socket.on("newMessage", async (message) => {
     const newMessage = new Message({
       senderId: message.senderId,
       text: message.text,
-      name: message.username,
+      name: message.name,
       createdDate: message.createdDate,
     });
+
     await newMessage.save();
-    io.emit("listMessages", listMessagesData);
+
+    io.emit("newMessage", newMessage);
   });
 
   socket.on("disconnect", () => {
