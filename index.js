@@ -1,9 +1,13 @@
+const schedule = require("node-schedule");
+
 const express = require("express");
 const formidableMiddleware = require("express-formidable");
 const mongoose = require("mongoose");
 const cors = require("cors");
 const axios = require("axios");
 const cloudinary = require("cloudinary").v2;
+// const moment = require("mome")
+const moment = require("moment-timezone");
 const io = require("socket.io")(8900, {
   cors: { origin: "http://localhost:3001" },
 });
@@ -17,7 +21,7 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-mongoose.connect(process.env.MONGODB_URI, {
+let mongooseData = mongoose.connect(process.env.MONGODB_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
   useCreateIndex: true,
@@ -103,8 +107,6 @@ io.on("connection", async (socket) => {
   const listMessagesData = await Message.find();
 
   socket.on("getMessages", (getMessages) => {
-    console.log(getMessages);
-    console.log(listMessagesData);
     getMessages && io.emit("listMessages", listMessagesData);
   });
 
@@ -123,7 +125,7 @@ io.on("connection", async (socket) => {
     });
 
     await newMessage.save();
-
+    console.log("newMessage");
     io.emit("newMessage", newMessage);
   });
 
@@ -132,4 +134,48 @@ io.on("connection", async (socket) => {
   });
 });
 
-app.listen(port, () => console.log("Server start"));
+const rule = new schedule.RecurrenceRule();
+rule.hour = 0;
+rule.second = 0;
+rule.minute = 0;
+
+// for global timezone
+// rule.tz = "Etc/UTC";
+rule.ts = "Europe/Paris";
+
+const oldMessagesToDelete = () =>
+  schedule.scheduleJob(rule, async () => {
+    const dayBeforeYesterday = moment()
+      .subtract("2", "days")
+      .startOf("day")
+      .toDate();
+
+    const messages = await Message.find({
+      createdDate: { $lte: dayBeforeYesterday },
+    });
+    console.log("messagesToDelete", messages);
+    if (messages.length > 0) {
+      const promises = [];
+      messages.forEach((message) => {
+        const promise = Message.findByIdAndDelete(message._id);
+        promises.push(promise);
+      });
+
+      await Promise.all(promises);
+      console.log("delete all old messages successfully");
+    } else {
+      console.log("nothing to delete");
+    }
+    // delete the collection
+    // await mongoose.connection.collection("messages").drop();
+    // console.log(messages);
+  });
+
+app.listen(port, () => {
+  console.log("Server start");
+  console.log("Press CTRL-C to stop\n");
+  oldMessagesToDelete();
+  app.on("close", () => {
+    app.removeAllListeners();
+  });
+});
