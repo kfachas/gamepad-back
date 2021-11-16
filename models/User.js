@@ -12,6 +12,11 @@ const User = mongoose.model("User", {
     },
     avatar: Object,
   },
+  top: {
+    1: Object,
+    2: Object,
+    3: Object,
+  },
   gamesFav: [],
   token: String,
   hash: String,

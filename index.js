@@ -5,7 +5,7 @@ const cors = require("cors");
 const axios = require("axios");
 const cloudinary = require("cloudinary").v2;
 const io = require("socket.io")(8900, {
-  cors: { origin: "http://localhost:3000" },
+  cors: { origin: "http://localhost:3001" },
 });
 require("dotenv").config();
 // process.env.PORT ||
@@ -23,6 +23,8 @@ mongoose.connect(process.env.MONGODB_URI, {
   useCreateIndex: true,
   useFindAndModify: false,
 });
+
+const Message = require("./models/Message");
 
 const app = express();
 app.use(formidableMiddleware());
@@ -98,12 +100,25 @@ app.get("*", (req, res) => {
 io.on("connection", async (socket) => {
   console.log("New user connected");
 
-  io.emit("welcome", "this is socket server");
+  const listMessagesData = await Message.find();
+  io.emit("listMessages", listMessagesData);
+
   socket.on("addUser", (userId) => {
     // addUser(userId, socket.id);
 
     console.log("adduser", userId);
   });
+  socket.on("newMessage", async (message) => {
+    const newMessage = new Message({
+      senderId: message.senderId,
+      text: message.text,
+      name: message.username,
+      createdDate: message.createdDate,
+    });
+    await newMessage.save();
+    io.emit("listMessages", listMessagesData);
+  });
+
   socket.on("disconnect", () => {
     console.log("user disconnected");
   });

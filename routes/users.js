@@ -102,15 +102,11 @@ router.post("/user/login", async (req, res) => {
 router.post("/user/findGameFav", isAuthenticated, async (req, res) => {
   try {
     const user = await User.findById(req.uid);
-    console.log("la");
     let findGame;
 
-    console.log(user);
     if (user.gamesFav.length > 0) {
-      findGame = user.gamesFav.some((game) => game.id === req.fields.gameId);
-      console.log(findGame);
+      findGame = user.gamesFav.find((game) => +game.id === req.fields.gameId);
     }
-    console.log("la");
     if (findGame && user.gamesFav.length > 0) {
       return res.status(200).json({ isAlreadyInFav: findGame });
     } else {
