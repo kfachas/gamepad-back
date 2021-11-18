@@ -106,15 +106,18 @@ io.on("connection", async (socket) => {
 
   const listMessagesData = await Message.find();
 
-  socket.on("getMessages", (getMessages) => {
-    getMessages && io.emit("listMessages", listMessagesData);
-  });
+  io.emit("listMessages", listMessagesData);
 
   // socket.on("addUser", (userId) => {
   //   // addUser(userId, socket.id);
 
   //   console.log("adduser", userId);
   // });
+
+  socket.on("typing", (data) => {
+    if (data.typing == true) io.emit("display", data);
+    else io.emit("display", data);
+  });
 
   socket.on("newMessage", async (message) => {
     const newMessage = new Message({
@@ -125,8 +128,7 @@ io.on("connection", async (socket) => {
     });
 
     await newMessage.save();
-    console.log("newMessage");
-    io.emit("newMessage", newMessage);
+    io.emit("getNewMessage", newMessage);
   });
 
   socket.on("disconnect", () => {
@@ -160,7 +162,6 @@ const oldMessagesToDelete = () =>
         const promise = Message.findByIdAndDelete(message._id);
         promises.push(promise);
       });
-
       await Promise.all(promises);
       console.log("delete all old messages successfully");
     } else {
